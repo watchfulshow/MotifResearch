@@ -1,0 +1,122 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.spyderproject
+.spyproject
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific - Large data files
+data/raw/*.fa
+data/raw/*.fa.gz
+data/raw/*.bed
+data/raw/*.bed.gz
+data/raw/*.fasta
+data/raw/*.fasta.gz
+data/processed/*.npz
+data/processed/*.pkl
+
+# Model weights (can be large)
+models/*.pt
+models/*.pth
+checkpoints/*.pt
+checkpoints/*.pth
+
+# Results (regeneratable)
+results/**/*.pkl
+results/**/*.json
+
+# Figures (regeneratable)
+figures/*.png
+figures/*.pdf
+figures/*.svg
+
+# Logs
+logs/*.log
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/.gitkeep
+!checkpoints/.gitkeep
+!results/.gitkeep
+!figures/.gitkeep
+!logs/.gitkeep

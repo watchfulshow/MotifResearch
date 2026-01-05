@@ -1,0 +1,160 @@
+# Enhancer Repair Research Configuration
+# Optimized for Google Colab T4 GPU (16GB VRAM)
+
+# =============================================================================
+# Model Architecture
+# =============================================================================
+model:
+  n_transformer_layers: 10
+  n_attention_heads: 8
+  d_model: 256
+  dim_feedforward: 1536
+  dropout: 0.1
+  cnn_channels: [128, 256, 384]
+  cnn_kernels: [7, 11, 15]
+  sequence_length: 200
+  num_classes: 2
+
+# =============================================================================
+# Training Configuration
+# =============================================================================
+training:
+  batch_size: 64
+  num_epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.01
+
+  # Optimization
+  gradient_accumulation_steps: 4  # Effective batch size: 256
+  max_grad_norm: 0.5  # Gradient clipping
+
+  # Learning rate scheduling
+  scheduler_factor: 0.5
+  scheduler_patience: 3
+  scheduler_min_lr: 1.0e-6
+
+  # Early stopping
+  early_stopping_patience: 7
+
+  # Stochastic sampling (for memory efficiency)
+  samples_per_epoch: 100000
+
+  # Mixed precision (highly recommended for T4)
+  use_mixed_precision: true
+
+# =============================================================================
+# Data Configuration
+# =============================================================================
+data:
+  # Sequence parameters
+  sequence_length: 200
+  gc_content: 0.42  # For background generation
+
+  # Split ratios
+  test_size: 0.15
+  val_size: 0.15
+
+  # Species
+  species_names:
+    - human
+    - mouse
+    - zebrafish
+    - chicken
+
+  # Maximum sequences per species (for memory management)
+  max_sequences_per_species: 200000
+
+  # Data loading
+  num_workers: 2
+  pin_memory: true
+
+# =============================================================================
+# Cross-Species Analysis
+# =============================================================================
+cross_species:
+  n_sequences_per_species: 500
+  damage_fraction: 0.1
+
+  # Repair parameters
+  max_repair_iterations: 30
+  repair_learning_rate: 0.01
+  target_probability: 0.9
+
+# =============================================================================
+# Grammar Discovery
+# =============================================================================
+grammar:
+  n_pairs_to_test: 1000
+  n_sequences_per_pair: 3
+
+  # Motif extraction
+  n_sequences_for_motifs: 100
+  importance_percentile: 75
+  min_motif_distance: 6
+  motif_window: 4  # +/- around peak
+
+  # Interaction thresholds
+  synergy_threshold: 0.5  # R_both < expected * threshold
+  redundancy_threshold: 1.5  # R_both > expected * threshold
+
+# =============================================================================
+# Generative Validation
+# =============================================================================
+generative:
+  n_generation_attempts: 500
+  max_iterations: 500
+  target_probability: 0.80
+  learning_rate: 0.05
+
+  # Known motifs for validation
+  known_motifs:
+    - "TATAAA"    # TATA box
+    - "CACGTG"    # E-box
+    - "GGGCGG"    # GC box
+    - "CCAAT"     # CAAT box
+    - "TGACGTCA"  # CRE
+
+# =============================================================================
+# Attention Analysis
+# =============================================================================
+attention:
+  n_samples: 100
+  n_ig_steps: 30  # Integrated Gradients interpolation steps
+
+# =============================================================================
+# Checkpointing
+# =============================================================================
+checkpointing:
+  checkpoint_dir: "checkpoints"
+  checkpoint_every_n_epochs: 1
+  keep_n_checkpoints: 5
+  save_best_only: false
+
+# =============================================================================
+# Paths
+# =============================================================================
+paths:
+  data_dir: "data"
+  raw_data_dir: "data/raw"
+  processed_data_dir: "data/processed"
+  models_dir: "models"
+  checkpoints_dir: "checkpoints"
+  results_dir: "results"
+  figures_dir: "figures"
+  logs_dir: "logs"
+
+# =============================================================================
+# Logging
+# =============================================================================
+logging:
+  log_level: "INFO"
+  log_file: "logs/training.log"
+  tensorboard: false  # Set to true if you want TensorBoard logging
+
+# =============================================================================
+# Random Seeds (for reproducibility)
+# =============================================================================
+seeds:
+  numpy_seed: 42
+  torch_seed: 42
+  data_split_seed: 42

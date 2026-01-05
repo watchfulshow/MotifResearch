@@ -1,0 +1,36 @@
+# Enhancer Repair Research - Dependencies
+# Compatible with Google Colab (Python 3.10+)
+
+# Deep Learning Framework
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Scientific Computing
+numpy>=1.24.0,<2.0.0
+scipy>=1.11.0
+pandas>=2.1.0
+scikit-learn>=1.3.0
+
+# Bioinformatics
+biopython>=1.81
+pyfaidx>=0.7.2  # For genome sequence extraction
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.17.0  # Optional: interactive plots
+
+# Model Interpretability
+captum>=0.6.0  # For Integrated Gradients
+
+# Progress & Utilities
+tqdm>=4.66.0
+psutil>=5.9.0  # Memory monitoring
+
+# Configuration
+pyyaml>=6.0.1
+
+# Jupyter/Colab
+ipywidgets>=8.0.0
+notebook>=7.0.0
