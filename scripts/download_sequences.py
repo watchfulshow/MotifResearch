@@ -72,14 +72,16 @@ def parse_bed(filepath: Path, max_sequences: int = 50000) -> List[Dict]:
     return coords
 
 def build_ensembl_url(chrom: str, start: int, end: int, species: str, assembly: Optional[str] = None):
-    # convert BED 0-based start to Ensembl 1-based inclusive
+    # Convert BED 0-based start to Ensembl 1-based inclusive
     start1 = start + 1
     species_name = SPECIES_MAP.get(species, SPECIES_MAP["human"])
     base_url = "https://rest.ensembl.org"
     # special-case chicken galGal4 to use archive
     if species == "chicken" and assembly == "galGal4":
         base_url = "https://e78.rest.ensembl.org"
-    url = f"{base_url}/sequence/region/{species_name}/{chrom.replace('chr','')}:{start1}-{end}?content-type=text/plain"
+    # Remove 'chr' prefix if present (e.g., chr1 -> 1)
+    chrom_clean = chrom[3:] if chrom.startswith('chr') else chrom
+    url = f"{base_url}/sequence/region/{species_name}/{chrom_clean}:{start1}-{end}?content-type=text/plain"
     # special zebrafish assembly parameter
     if species == "zebrafish" and assembly == "danRer10":
         url += "&coord_system_version=GRCz10"

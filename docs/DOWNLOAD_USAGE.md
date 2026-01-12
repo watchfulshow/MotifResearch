@@ -29,7 +29,7 @@ Recommended usage (examples)
 
 Recommended parameters
 - chunk_size: 15 (keeps requests ≈15/s)
-- max_workers: 6–12 depending on your network/CPU
+- max_workers: 8 (default; can use 6–12 depending on your network/CPU)
 - target_length: 200 (matches notebook)
 - max_retries: 3
 
