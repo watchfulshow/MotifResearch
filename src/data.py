@@ -110,52 +110,126 @@ def download_encode_coordinates(
     Returns:
         List of coordinate dictionaries {chrom, start, end, length}
     """
-    urls = {
-        'human': 'https://downloads.wenglab.org/Registry/V3/GRCh38-cCREs.bed.gz',
-        'mouse': 'https://downloads.wenglab.org/Registry/V3/mm10-cCREs.bed.gz'
+    # Multiple URL sources with fallbacks - SCREEN API V13 is the current stable source
+    url_sources = {
+        'human': [
+            # SCREEN API V13 (current stable)
+            'https://api.wenglab.org/screen_v13/fdownloads/cCREs/GRCh38-cCREs.bed.gz',
+            # ENCODE Portal direct download
+            'https://www.encodeproject.org/files/ENCFF334DFY/@@download/ENCFF334DFY.bed.gz',
+            # Legacy V3 registry (may be deprecated)
+            'https://downloads.wenglab.org/Registry/V3/GRCh38-cCREs.bed.gz',
+        ],
+        'mouse': [
+            # SCREEN API V13 (current stable)
+            'https://api.wenglab.org/screen_v13/fdownloads/cCREs/mm10-cCREs.bed.gz',
+            # ENCODE Portal direct download
+            'https://www.encodeproject.org/files/ENCFF056LNT/@@download/ENCFF056LNT.bed.gz',
+            # Legacy V3 registry (may be deprecated)
+            'https://downloads.wenglab.org/Registry/V3/mm10-cCREs.bed.gz',
+        ]
     }
 
-    if species not in urls:
+    if species not in url_sources:
         raise ValueError(f"Species must be 'human' or 'mouse', got {species}")
 
     print(f"Downloading {species} ENCODE data...")
-    print(f"URL: {urls[species]}")
 
-    # Download to temporary file
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.bed.gz')
-    urllib.request.urlretrieve(urls[species], temp_file.name)
+    # Try each URL in order until one succeeds
+    temp_file_path = None
+    download_success = False
+    errors = []  # Track all errors for better debugging
+
+    for url in url_sources[species]:
+        print(f"Trying: {url}")
+        # Clean up any previous temp file from failed attempts
+        if temp_file_path and Path(temp_file_path).exists():
+            try:
+                Path(temp_file_path).unlink()
+            except OSError:
+                pass
+            temp_file_path = None
+
+        try:
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.bed.gz')
+            temp_file_path = temp_file.name
+            temp_file.close()  # Close so urlretrieve can write to it
+            urllib.request.urlretrieve(url, temp_file_path)
+            # Verify the file is valid BED format gzipped data
+            with gzip.open(temp_file_path, 'rt') as f:
+                # Read first non-header line to verify it's valid BED format
+                for line in f:
+                    if line.startswith('#') or line.startswith('track'):
+                        continue
+                    parts = line.strip().split('\t')
+                    # Valid BED format should have at least 3 columns: chrom, start, end
+                    if len(parts) >= 3:
+                        try:
+                            int(parts[1])  # Verify start is an integer
+                            int(parts[2])  # Verify end is an integer
+                            download_success = True
+                            print(f"✓ Successfully downloaded from {url}")
+                            break
+                        except ValueError:
+                            raise ValueError("Invalid BED format: start/end positions are not integers")
+                    else:
+                        raise ValueError(f"Invalid BED format: expected at least 3 columns, got {len(parts)}")
+                if download_success:
+                    break
+        except Exception as e:
+            errors.append(f"{url}: {e}")
+            print(f"⚠️  Failed: {e}")
+            continue
+
+    if not download_success:
+        # Clean up temp file on failure
+        if temp_file_path and Path(temp_file_path).exists():
+            try:
+                Path(temp_file_path).unlink()
+            except OSError:
+                pass
+        error_details = "\n  ".join(errors) if errors else "Unknown error"
+        raise RuntimeError(
+            f"Failed to download {species} ENCODE data from all sources.\n"
+            f"Attempted URLs and errors:\n  {error_details}"
+        )
 
     print("Parsing BED file...")
     coordinates = []
 
-    with gzip.open(temp_file.name, 'rt') as f:
-        for line in tqdm(f, desc="Reading coordinates"):
-            # Skip header lines
-            if line.startswith('#') or line.startswith('track'):
-                continue
+    try:
+        with gzip.open(temp_file_path, 'rt') as f:
+            for line in tqdm(f, desc="Reading coordinates"):
+                # Skip header lines
+                if line.startswith('#') or line.startswith('track'):
+                    continue
 
-            parts = line.strip().split('\t')
-            if len(parts) >= 3:
-                chrom = parts[0]
-                start = int(parts[1])
-                end = int(parts[2])
-                length = end - start
+                parts = line.strip().split('\t')
+                if len(parts) >= 3:
+                    chrom = parts[0]
+                    start = int(parts[1])
+                    end = int(parts[2])
+                    length = end - start
 
-                # Filter for appropriate size (150-250bp)
-                if 150 <= length <= 250:
-                    coordinates.append({
-                        'chrom': chrom,
-                        'start': start,
-                        'end': end,
-                        'length': length
-                    })
+                    # Filter for appropriate size (150-250bp)
+                    if 150 <= length <= 250:
+                        coordinates.append({
+                            'chrom': chrom,
+                            'start': start,
+                            'end': end,
+                            'length': length
+                        })
 
-            # Stop if we have enough
-            if len(coordinates) >= max_sequences * 2:
-                break
-
-    # Clean up
-    Path(temp_file.name).unlink()
+                # Stop if we have enough
+                if len(coordinates) >= max_sequences * 2:
+                    break
+    finally:
+        # Clean up temp file
+        if temp_file_path and Path(temp_file_path).exists():
+            try:
+                Path(temp_file_path).unlink()
+            except OSError:
+                pass
 
     # Random sample to target size
     if len(coordinates) > max_sequences:
